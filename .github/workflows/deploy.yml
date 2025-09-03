@@ -30,7 +30,7 @@ jobs:
 
     # Optional Vercel deployment steps - only run if VERCEL_TOKEN is set
     - name: Deploy to Vercel (Production)
-      if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master' && secrets.VERCEL_TOKEN != ''
+      if: (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master') && secrets.VERCEL_TOKEN != ''
       uses: amondnet/vercel-action@v25
       with:
         vercel-token: ${{ secrets.VERCEL_TOKEN }}
