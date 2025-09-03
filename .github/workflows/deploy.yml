@@ -30,7 +30,7 @@ jobs:
 
     # Optional Vercel deployment steps - only run if VERCEL_TOKEN is set
     - name: Deploy to Vercel (Production)
-      if: (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master') && secrets.VERCEL_TOKEN != ''
+      if: (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master') && env.VERCEL_TOKEN
       uses: amondnet/vercel-action@v25
       with:
         vercel-token: ${{ secrets.VERCEL_TOKEN }}
@@ -38,9 +38,11 @@ jobs:
         vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
         vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
       continue-on-error: true
+      env:
+        VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
 
     - name: Deploy to Vercel (Preview)
-      if: github.ref != 'refs/heads/main' && github.ref != 'refs/heads/master' && secrets.VERCEL_TOKEN != ''
+      if: github.ref != 'refs/heads/main' && github.ref != 'refs/heads/master' && env.VERCEL_TOKEN
       uses: amondnet/vercel-action@v25
       with:
         vercel-token: ${{ secrets.VERCEL_TOKEN }}
@@ -48,9 +50,13 @@ jobs:
         vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
         vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
       continue-on-error: true
+      env:
+        VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
 
     - name: Comment PR with deployment URL
-      if: github.event_name == 'pull_request' && secrets.VERCEL_TOKEN != ''
+      if: github.event_name == 'pull_request' && env.VERCEL_TOKEN
+      env:
+        VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
       uses: actions/github-script@v7
       with:
         script: |
