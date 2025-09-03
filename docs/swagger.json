@@ -1,0 +1,811 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Conference Room Booking API",
+    "description": "API for managing conference room bookings",
+    "version": "1.0.0",
+    "contact": {
+      "name": "API Support",
+      "email": "support@conferenceroom.app",
+      "url": "https://conferenceroom.app/support"
+    }
+  },
+  "servers": [
+    {
+      "url": "https://api.conferenceroom.app/v1",
+      "description": "Production server"
+    },
+    {
+      "url": "https://staging-api.conferenceroom.app/v1",
+      "description": "Staging server"
+    }
+  ],
+  "paths": {
+    "/auth/login": {
+      "post": {
+        "summary": "Authenticate a user",
+        "description": "Authenticate a user and get a JWT token",
+        "tags": ["Authentication"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["email", "password"],
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "format": "email",
+                    "example": "user@example.com"
+                  },
+                  "password": {
+                    "type": "string",
+                    "format": "password",
+                    "example": "password123"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful authentication",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "token": {
+                      "type": "string",
+                      "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                    },
+                    "user": {
+                      "$ref": "#/components/schemas/User"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid credentials",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/register": {
+      "post": {
+        "summary": "Register a new user",
+        "description": "Register a new user and get a JWT token",
+        "tags": ["Authentication"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["email", "password", "firstName", "lastName"],
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "format": "email",
+                    "example": "newuser@example.com"
+                  },
+                  "password": {
+                    "type": "string",
+                    "format": "password",
+                    "example": "password123"
+                  },
+                  "firstName": {
+                    "type": "string",
+                    "example": "Jane"
+                  },
+                  "lastName": {
+                    "type": "string",
+                    "example": "Smith"
+                  },
+                  "department": {
+                    "type": "string",
+                    "example": "Marketing"
+                  },
+                  "position": {
+                    "type": "string",
+                    "example": "Marketing Manager"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "User created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "token": {
+                      "type": "string",
+                      "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                    },
+                    "user": {
+                      "$ref": "#/components/schemas/User"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Email already exists",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/rooms": {
+      "get": {
+        "summary": "Get all rooms",
+        "description": "Get a list of all rooms",
+        "tags": ["Rooms"],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "capacity",
+            "in": "query",
+            "description": "Minimum capacity",
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          {
+            "name": "features",
+            "in": "query",
+            "description": "Comma-separated list of features",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "floor",
+            "in": "query",
+            "description": "Floor number",
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          {
+            "name": "building",
+            "in": "query",
+            "description": "Building name",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Page number",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 1
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "Number of items per page",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 10
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of rooms",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Room"
+                      }
+                    },
+                    "pagination": {
+                      "$ref": "#/components/schemas/Pagination"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Create a new room",
+        "description": "Create a new room (admin only)",
+        "tags": ["Rooms"],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RoomInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Room created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/Room"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/bookings": {
+      "get": {
+        "summary": "Get all bookings",
+        "description": "Get a list of all bookings",
+        "tags": ["Bookings"],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "date",
+            "in": "query",
+            "description": "Date (YYYY-MM-DD)",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "roomId",
+            "in": "query",
+            "description": "Room ID",
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "userId",
+            "in": "query",
+            "description": "User ID (admin only)",
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Page number",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 1
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "Number of items per page",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 10
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of bookings",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Booking"
+                      }
+                    },
+                    "pagination": {
+                      "$ref": "#/components/schemas/Pagination"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Create a new booking",
+        "description": "Create a new booking",
+        "tags": ["Bookings"],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BookingInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Booking created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/Booking"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict (room already booked)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    },
+    "schemas": {
+      "User": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "example": 1
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "example": "user@example.com"
+          },
+          "firstName": {
+            "type": "string",
+            "example": "John"
+          },
+          "lastName": {
+            "type": "string",
+            "example": "Doe"
+          },
+          "role": {
+            "type": "string",
+            "enum": ["admin", "manager", "user", "guest"],
+            "example": "user"
+          },
+          "department": {
+            "type": "string",
+            "example": "Engineering"
+          },
+          "position": {
+            "type": "string",
+            "example": "Software Engineer"
+          }
+        }
+      },
+      "Room": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "example": 1
+          },
+          "name": {
+            "type": "string",
+            "example": "Conference Room Alpha"
+          },
+          "capacity": {
+            "type": "integer",
+            "example": 12
+          },
+          "location": {
+            "type": "string",
+            "example": "Main Building, Floor 3"
+          },
+          "floor": {
+            "type": "integer",
+            "example": 3
+          },
+          "building": {
+            "type": "string",
+            "example": "Main Building"
+          },
+          "features": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "example": ["Projector", "Whiteboard", "Video Conference"]
+          },
+          "equipment": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "example": ["TV", "Phone", "HDMI Cable"]
+          },
+          "isActive": {
+            "type": "boolean",
+            "example": true
+          },
+          "description": {
+            "type": "string",
+            "example": "Large conference room with video conferencing capabilities"
+          }
+        }
+      },
+      "RoomInput": {
+        "type": "object",
+        "required": ["name", "capacity", "location"],
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "New Conference Room"
+          },
+          "capacity": {
+            "type": "integer",
+            "example": 15
+          },
+          "location": {
+            "type": "string",
+            "example": "Main Building, Floor 4"
+          },
+          "floor": {
+            "type": "integer",
+            "example": 4
+          },
+          "building": {
+            "type": "string",
+            "example": "Main Building"
+          },
+          "features": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "example": ["Projector", "Whiteboard"]
+          },
+          "equipment": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "example": ["TV", "Phone"]
+          },
+          "description": {
+            "type": "string",
+            "example": "New conference room with projector"
+          }
+        }
+      },
+      "Booking": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "example": 1
+          },
+          "title": {
+            "type": "string",
+            "example": "Weekly Team Standup"
+          },
+          "startTime": {
+            "type": "string",
+            "example": "09:00"
+          },
+          "endTime": {
+            "type": "string",
+            "example": "09:30"
+          },
+          "date": {
+            "type": "string",
+            "format": "date",
+            "example": "2023-09-15"
+          },
+          "organizer": {
+            "type": "string",
+            "example": "Sarah Johnson"
+          },
+          "attendees": {
+            "type": "integer",
+            "example": 8
+          },
+          "roomId": {
+            "type": "integer",
+            "example": 1
+          },
+          "userId": {
+            "type": "integer",
+            "example": 1
+          },
+          "description": {
+            "type": "string",
+            "example": "Weekly team standup meeting"
+          },
+          "isRecurring": {
+            "type": "boolean",
+            "example": false
+          },
+          "recurrencePattern": {
+            "type": "object",
+            "properties": {
+              "frequency": {
+                "type": "string",
+                "enum": ["daily", "weekly", "monthly"],
+                "example": "weekly"
+              },
+              "interval": {
+                "type": "integer",
+                "example": 1
+              },
+              "daysOfWeek": {
+                "type": "array",
+                "items": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 6
+                },
+                "example": [1]
+              },
+              "endDate": {
+                "type": "string",
+                "format": "date",
+                "example": "2023-12-31"
+              }
+            }
+          }
+        }
+      },
+      "BookingInput": {
+        "type": "object",
+        "required": ["title", "startTime", "endTime", "date", "organizer", "roomId"],
+        "properties": {
+          "title": {
+            "type": "string",
+            "example": "New Meeting"
+          },
+          "startTime": {
+            "type": "string",
+            "example": "14:00"
+          },
+          "endTime": {
+            "type": "string",
+            "example": "15:00"
+          },
+          "date": {
+            "type": "string",
+            "format": "date",
+            "example": "2023-09-16"
+          },
+          "organizer": {
+            "type": "string",
+            "example": "John Doe"
+          },
+          "attendees": {
+            "type": "integer",
+            "example": 5
+          },
+          "roomId": {
+            "type": "integer",
+            "example": 1
+          },
+          "description": {
+            "type": "string",
+            "example": "New project kickoff meeting"
+          }
+        }
+      },
+      "Pagination": {
+        "type": "object",
+        "properties": {
+          "total": {
+            "type": "integer",
+            "example": 100
+          },
+          "page": {
+            "type": "integer",
+            "example": 1
+          },
+          "limit": {
+            "type": "integer",
+            "example": 10
+          },
+          "pages": {
+            "type": "integer",
+            "example": 10
+          }
+        }
+      },
+      "Error": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "object",
+            "properties": {
+              "message": {
+                "type": "string",
+                "example": "Error message"
+              },
+              "code": {
+                "type": "string",
+                "example": "ERROR_CODE"
+              },
+              "status": {
+                "type": "integer",
+                "example": 400
+              },
+              "details": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "example": ["Additional error details"]
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
