@@ -15,7 +15,7 @@ import ErrorBoundary from './components/ErrorBoundary';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { NotificationProvider } from './context/NotificationContext';
 import { A11yProvider } from './components/A11yProvider';
-import { useMediaQuery } from './hooks/useMediaQuery';
+import useMediaQuery from './hooks/useMediaQuery';
 import bookingService from './services/bookingService';
 import roomService from './services/roomService';
 import logger from './utils/logger';
@@ -429,4 +429,3 @@ function App() {
 }
 
 export default App;
-
